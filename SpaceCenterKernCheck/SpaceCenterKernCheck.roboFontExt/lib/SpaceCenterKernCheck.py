@@ -15,7 +15,6 @@ Useful for checking your kerning in multiline text on screen for minor fixes.
 
 # TODO: use custom strings
 
-print 'hello world'
 
 from mojo.events import addObserver, removeObserver
 from mojo.UI import OpenSpaceCenter
@@ -35,7 +34,6 @@ class SpaceCenterKerning(object):
             addObserver(self, 'SpaceCenterObserver', 'spaceCenterDidOpen')
             self.spaceCenter = OpenSpaceCenter(self.font, newWindow=True)
 
-            # addObserver(self, None, 'spaceCenterDraw')
             addObserver(self, 'pressedKey', 'spaceCenterKeyDown')
             addObserver(self, 'closeSpaceCenter', 'spaceCenterWillClose')
 
@@ -49,7 +47,12 @@ class SpaceCenterKerning(object):
             self.i = 0
             self.maxi = len(self.kKeys)
 
-            self.spaceCenter.set(self.pairsTextCheck[self.i])
+            if self.pairsTextCheck:
+                self.hasKerning = True
+                self.spaceCenter.set(self.pairsTextCheck[self.i])
+            else:
+                self.hasKerning = False
+                self.spaceCenter.setRaw('YOUR FONT HAS NO KERNING PAIRS -- your font has no kerning pairs')
 
         else:
             message('You need to open a font first!')
@@ -59,40 +62,35 @@ class SpaceCenterKerning(object):
             self.spaceCenter.set(self.pairsTextCheck[self.i])
             self.updateSpaceCenter()
 
-    # def updateSpaceCenter(self):
-    #     self.spaceCenter.set(self.pairsTextCheck[self.i])
-
-    # def setSpaceCenterString(self, info):
-    #     self.updateSpaceCenter()
-
     def pressedKey(self, info):
-        event = info['event']
-        pair = self.kKeys[self.i][1]
-        keyCode = event.keyCode()
+        if self.hasKerning is True:
+            event = info['event']
+            pair = self.kKeys[self.i][1]
+            keyCode = event.keyCode()
 
-        # modifier key? alt, shift, None
-        if event.modifierFlags() == 11010336:
-            kIncrement = 1
-        elif event.modifierFlags() == 10617090:
-            kIncrement = 5
-        else:
-            kIncrement = 10
+            # modifier key? alt, shift, None
+            if event.modifierFlags() == 11010336:
+                kIncrement = 1
+            elif event.modifierFlags() == 10617090:
+                kIncrement = 5
+            else:
+                kIncrement = 10
 
-        # down, up, left, right keyCodes
-        if keyCode == 125:
-            self.i += 1
-        elif keyCode == 126:
-            self.i -= 1
-        elif keyCode == 123:
-            self.font.kerning[pair] -= kIncrement
-        elif keyCode == 124:
-            self.font.kerning[pair] += kIncrement
+            # down, up, left, right keyCodes
+            if keyCode == 125:
+                self.i += 1
+            elif keyCode == 126:
+                self.i -= 1
+            elif keyCode == 123:
+                self.font.kerning[pair] -= kIncrement
+            elif keyCode == 124:
+                self.font.kerning[pair] += kIncrement
 
-        # reset if self.i is out of range
-        if self.i == self.maxi or self.i == -self.maxi:
-            self.i = 0
+            # reset if self.i is out of range
+            if self.i == self.maxi or self.i == -self.maxi:
+                self.i = 0
 
-        self.spaceCenter.set(self.pairsTextCheck[self.i])
+            self.spaceCenter.set(self.pairsTextCheck[self.i])
 
     def getKerningPairsRef(self, font):
         """use only the main glyph from kerning group and keep the reference"""
@@ -133,7 +131,6 @@ class SpaceCenterKerning(object):
     def closeSpaceCenter(self, info):
         """remove Observers when closing the custom SpaceCenter"""
         removeObserver(self, 'spaceCenterDidOpen')
-        # removeObserver(self, 'spaceCenterDraw')
         removeObserver(self, 'spaceCenterWillClose')
         removeObserver(self, 'spaceCenterKeyDown')
 
